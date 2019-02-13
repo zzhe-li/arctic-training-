@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, warning=FALSE, message=FALSE}
 library(dplyr)
 library(tidyr)
+library(rlang)
 # to call stats filter = stats::filter()
 ```
 
@@ -35,7 +36,7 @@ Remove the `all` and `notesRegCode` columns using `select`
 Cmd + shift + m : pipe operator shortcut %>%
 
 ```{r}
-catch_long <- catch_original %>%
+catch_long <- catch_original %>% 
   select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
 # also can use another script
 #  seleect(-All, -notesRegCode)
@@ -46,6 +47,61 @@ catch_long <- catch_long %>%
 
 head(catch_long)
 ```
+
+```{r}
+catch_wide <- catch_long %>%
+  spread(key = species, value = catch)
+
+head(catch_wide)
+```
+
+# Clean up your data
+
+* rename catch to catch_thousands
+* change catch colum to numeric 
+* creat a new catch column in units num. of fish
+
+```{r}
+catch_clean <- catch_long %>%
+  rename(catch_thousands = catch) %>%
+  mutate(catch_thousands = ifelse(catch_thousands == "I",1,catch_thousands)) %>%
+  mutate(catch_thousands = as.numeric(catch_thousands)) %>%
+  mutate(catch = catch_thousands * 1000)
+catch_clean <- catch_clean %>%
+  select(-catch_thousands)
+
+head(catch_clean)
+```
+
+```{r}
+test <- as.numeric(catch_long$catch)
+i <- which(is.na(test) == TRUE)
+catch_long[i,]
+```
+
+## split = Applu - Combine
+
+* calculate mean catch by species
+
+```{r}
+species_mean <- catch_clean %>%
+  group_by(species, Region) %>%
+  summarise(catch_mean = mean(catch),
+            num_obs = length(which(is.na(catch) == F)))
+
+head(species_mean)
+```
+
+```{r}
+year_mean <- catch_clean %>%
+  group_by(Year) %>%
+  summarize(catch_mean = mean(catch)) %>%
+  arrange(-Year) %>%
+  filter(Year <= 1990 | Year >= 1960) # & this is or
+
+year_mean
+```
+
 
 # Join the Region Definitions
 
