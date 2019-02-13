@@ -102,7 +102,80 @@ year_mean <- catch_clean %>%
 year_mean
 ```
 
-
 # Join the Region Definitions
 
+Read in the regions dataframe
+
+```{r}
+region_defs <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1", method = "libcurl"),
+              stringsAsFactors = FALSE) %>% 
+    select(code, mgmtArea)
+#    rename(Region = code)
+
+head(region_defs)
+```
+
+```{r}
+catch_joined <- left_join(catch_clean, region_defs, by = c("Region" = "code"))
+
+head(catch_joined)
+```
+
+
 # Misc. Functions
+
+```{r}
+dates_df <- data.frame(date = c("5/24/1930",
+                                "5/25/1930",
+                                "5/26/1930",
+                                "5/27/1930",
+                                "5/28/1930"),
+                       stringsAsFactors = FALSE)
+```
+
+```{r}
+dates_split <- dates_df %>%
+  separate(date, into = c("month", "day", "year"), sep = "/", remove = F)
+
+head(dates_split)
+```
+
+```{r}
+isls <- data.frame(city = c("ALA-02",
+                                 "ALA-03",
+                                 "GUG-12",
+                                 "GUA-21",
+                                 "GUA-12"),
+                        stringsAsFactors = FALSE)
+isls <- isls %>%
+  separate(city, into = c("island","site"))
+
+isls
+```
+
+```{r}
+library(stringr)
+
+month <- c("5","05","03")
+
+str_pad(month, 2, side = "left", pad = "0")
+```
+
+```{r}
+write.csv(catch_clean, "catch_clean.csv", row.names = F)
+```
+
+
+```{r}
+dates_unite <- dates_split %>%
+  unite(col = data_iso, year, month, day, sep = '-')
+
+head(dates_unite)
+```
+
+
+
+
+
+
+
