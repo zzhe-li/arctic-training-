@@ -22,6 +22,30 @@ library(tidyr)
     - move from wide to long
 * general QA
 
+[Mike Byerly. Alaska commercial salmon catches by management region (1886- 1997). Gulf of Alaska Data Portal. df35b.304.2.](https://knb.ecoinformatics.org/view/df35b.304.2)
+```{r}
+# the method to read data from URL link
+catch_original <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", method = "libcurl"),
+                    stringsAsFactors = FALSE)
+head(catch_original)
+```
+
+Remove the `all` and `notesRegCode` columns using `select` 
+
+Cmd + shift + m : pipe operator shortcut %>%
+
+```{r}
+catch_long <- catch_original %>%
+  select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
+# also can use another script
+#  seleect(-All, -notesRegCode)
+catch_long <- catch_long %>%
+  gather(key = "species", value = "catch", 
+         # -Region, -Year,
+         Chinook, Sockeye, Pink, Chum, Coho)
+
+head(catch_long)
+```
 
 # Join the Region Definitions
 
