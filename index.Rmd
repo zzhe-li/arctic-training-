@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "index"
 author: "Zhe Li"
 date: "2/14/2019"
 output: html_document
@@ -8,4 +8,103 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+  library(leaflet)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(DT)
+  library(scales)
+```
+
+# Reformat the data for plotting
+
+Alaska Department of Fish and Game, Division of Commercial Fisheries. 2017. Daily salmon escapement counts from the OceanAK database, Alaska, 1921-2017. Knowledge Network for Biocomplexity. doi:10.5063/F1S46Q6M. 
+
+```{r}
+esc <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e", method = "libcurl"),
+stringsAsFactors = FALSE)
+```
+
+* calculate annual escapment by species and region
+    + `separate`
+    + `group_by`
+    + `summarize` using the `sum` function 
+* filter for just pacific salmon (Sockeye, Chinook, Coho, Pink, Chum)
+
+annual_esc 
+
+```{r}
+esc_sep <- esc %>%
+  separate(sampleDate, into = c("year","month","day"), sep = "-", remove = F)
+
+head(esc_sep)
+```
+
+```{r}
+annual_esc <- esc_sep %>%
+  # coerce year to numeric type
+  mutate(year = as.numeric(year)) %>%
+  group_by(year,Species,SASAP.Region) %>%
+  summarize(count = sum(DailyCount)) %>%
+  filter(Species == "Sockeye" | Species == "Chinook" | Species == "Coho" | Species == "Pink" | Species == "Chum") 
+
+head(annual_esc)
+```
+
+# Generate some static plots 
+
+```{r}
+ggplot(annual_esc, aes(x = Species, y = count, fill = SASAP.Region))+
+  scale_fill_brewer(palette = "Dark2")+
+  geom_col()
+# fill will change the whole block 
+# khaki gray8 <- color name 
+# fill = "gray8"
+```
+
+```{r}
+my_theme <- theme_test() +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+ggplot(filter(annual_esc, SASAP.Region == "Kodiak"), aes(x=year, y=count, color=Species))+
+  geom_line()+
+  geom_point()+
+  # the y coordinates scale, and you also can choose "percent"
+  scale_y_continuous(labels = comma) + 
+  ylab("Escapement (num of fish)")+
+  xlab("year")+
+  ggtitle("Kodiak Salmon Escapement")+
+  my_theme
+# theme_test()
+# theme(legend.position = "bottom", legend.title = element_blank())
+# theme_bw()
+# theme_dark()
+  
+```
+
+```{r,fig.width=5,fig.height=8}
+p <- ggplot(annual_esc, aes(x=year, y=count, color=Species))+
+  geom_line()+
+  geom_point()+
+  scale_y_continuous(labels = comma)+ 
+  facet_wrap(~SASAP.Region, scales = "free_y", ncol = 2)+ 
+  my_theme
+p
+
+ggsave("figures/regional_escapement.png",
+       plot = p,
+       width = 7,
+       height = 8,
+       units = "in")
+```
+
+
+# Generate an interactive map
 
