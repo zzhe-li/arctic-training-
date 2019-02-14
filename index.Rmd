@@ -89,7 +89,7 @@ ggplot(filter(annual_esc, SASAP.Region == "Kodiak"), aes(x=year, y=count, color=
   
 ```
 
-```{r,fig.width=5,fig.height=8}
+```{r,fig.width=7,fig.height=8}
 p <- ggplot(annual_esc, aes(x=year, y=count, color=Species))+
   geom_line()+
   geom_point()+
@@ -107,4 +107,32 @@ ggsave("figures/regional_escapement.png",
 
 
 # Generate an interactive map
+
+Map the sampling locations for escapement
+
+
+
+* find distinct lat/lon/location combinations
+
+```{r}
+locations <- esc %>%
+  distinct(Location, Latitude, Longitude) %>%
+  drop_na()
+
+head(locations)
+```
+
+```{r, echo=FALSE}
+datatable(locations)
+```
+
+```{r}
+leaflet(locations) %>%
+  addTiles() %>%
+  addMarkers(lng = ~Longitude, lat= ~Latitude, popup = ~Location)
+```
+
+
+
+
 
